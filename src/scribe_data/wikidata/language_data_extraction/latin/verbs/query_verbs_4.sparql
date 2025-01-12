@@ -1,0 +1,55 @@
+# tool: scribe-data
+# All Latin (Q397) verbs (Q24905) and the given forms.
+# Enter this query at https://query.wikidata.org/.
+
+SELECT
+  (REPLACE(STR(?lexeme), "http://www.wikidata.org/entity/", "") AS ?lexemeID)
+  ?verb
+  ?SecondPersonSingularIndicativePassive
+  ?SecondPersonSingularImperativePassive
+  ?ZeroPersonInfinitivePassive
+  ?ZeroPersonInfinitiveActive
+  ?GenitiveSingularActiveParticiple
+  ?GenitivePluralActiveParticiple
+
+WHERE {
+  ?lexeme dct:language wd:Q397 ;
+    wikibase:lexicalCategory wd:Q24905 ;
+    wikibase:lemma ?verb .
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?SecondPersonSingularIndicativePassiveForm .
+    ?SecondPersonSingularIndicativePassiveForm ontolex:representation ?SecondPersonSingularIndicativePassive ;
+      wikibase:grammaticalFeature wd:Q51929049, wd:Q110786, wd:Q192613, wd:Q682111, wd:Q1194697 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?SecondPersonSingularImperativePassiveForm .
+    ?SecondPersonSingularImperativePassiveForm ontolex:representation ?SecondPersonSingularImperativePassive ;
+      wikibase:grammaticalFeature wd:Q51929049, wd:Q110786, wd:Q192613, wd:Q22716, wd:Q1194697 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?ZeroPersonInfinitivePassiveForm .
+    ?ZeroPersonInfinitivePassiveForm ontolex:representation ?ZeroPersonInfinitivePassive ;
+      wikibase:grammaticalFeature wd:Q88778575, wd:Q192613, wd:Q179230, wd:Q1194697 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?ZeroPersonInfinitiveActiveForm .
+    ?ZeroPersonInfinitiveActiveForm ontolex:representation ?ZeroPersonInfinitiveActive ;
+      wikibase:grammaticalFeature wd:Q88778575, wd:Q192613, wd:Q179230, wd:Q1317831 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?GenitiveSingularActiveParticipleForm .
+    ?GenitiveSingularActiveParticipleForm ontolex:representation ?GenitiveSingularActiveParticiple ;
+      wikibase:grammaticalFeature wd:Q146233, wd:Q110786, wd:Q192613, wd:Q1317831, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?GenitivePluralActiveParticipleForm .
+    ?GenitivePluralActiveParticipleForm ontolex:representation ?GenitivePluralActiveParticiple ;
+      wikibase:grammaticalFeature wd:Q146233, wd:Q146786, wd:Q192613, wd:Q1317831, wd:Q814722 .
+  }
+}

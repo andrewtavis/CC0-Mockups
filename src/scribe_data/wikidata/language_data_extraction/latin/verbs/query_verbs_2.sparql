@@ -1,0 +1,41 @@
+# tool: scribe-data
+# All Latin (Q397) verbs (Q24905) and the given forms.
+# Enter this query at https://query.wikidata.org/.
+
+SELECT
+  (REPLACE(STR(?lexeme), "http://www.wikidata.org/entity/", "") AS ?lexemeID)
+  ?verb
+  ?NeuterAccusativeSingularActiveParticiple
+  ?NominativeSingularActiveParticiple
+  ?VocativeSingularActiveParticiple
+  ?AblativeSingularActiveParticiple
+
+WHERE {
+  ?lexeme dct:language wd:Q397 ;
+    wikibase:lexicalCategory wd:Q24905 ;
+    wikibase:lemma ?verb .
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?NeuterAccusativeSingularActiveParticipleForm .
+    ?NeuterAccusativeSingularActiveParticipleForm ontolex:representation ?NeuterAccusativeSingularActiveParticiple ;
+      wikibase:grammaticalFeature wd:Q1775461, wd:Q146078, wd:Q110786, wd:Q192613, wd:Q1317831, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?NominativeSingularActiveParticipleForm .
+    ?NominativeSingularActiveParticipleForm ontolex:representation ?NominativeSingularActiveParticiple ;
+      wikibase:grammaticalFeature wd:Q131105, wd:Q110786, wd:Q192613, wd:Q1317831, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?VocativeSingularActiveParticipleForm .
+    ?VocativeSingularActiveParticipleForm ontolex:representation ?VocativeSingularActiveParticiple ;
+      wikibase:grammaticalFeature wd:Q185077, wd:Q110786, wd:Q192613, wd:Q1317831, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?AblativeSingularActiveParticipleForm .
+    ?AblativeSingularActiveParticipleForm ontolex:representation ?AblativeSingularActiveParticiple ;
+      wikibase:grammaticalFeature wd:Q156986, wd:Q110786, wd:Q192613, wd:Q1317831, wd:Q814722 .
+  }
+}

@@ -266,39 +266,43 @@
     }
   },
   "06_person": {
-    "1": {
+    "01": {
+      "label": "ZeroPerson",
+      "qid": "Q88778575"
+    },
+    "02": {
       "label": "FirstPerson",
       "qid": "Q21714344"
     },
-    "2": {
+    "03": {
       "label": "SecondPerson",
       "qid": "Q51929049"
     },
-    "3": {
+    "04": {
       "label": "ThirdPerson",
       "qid": "Q51929074"
     },
-    "4": {
+    "05": {
       "label": "Negative",
       "qid": "Q15737187"
     },
-    "5": {
+    "06": {
       "label": "Conjunctive",
       "qid": "Q2888577"
     },
-    "6": {
+    "07": {
       "label": "Imperfective",
       "qid": "Q2898727"
     },
-    "7": {
+    "08": {
       "label": "Attributive",
       "qid": "Q53608953"
     },
-    "8": {
+    "09": {
       "label": "Hypothetical",
       "qid": "Q53609593"
     },
-    "9": {
+    "10": {
       "label": "Aorist",
       "qid": "Q216497"
     }

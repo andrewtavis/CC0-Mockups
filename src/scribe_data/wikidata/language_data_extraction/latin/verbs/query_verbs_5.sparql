@@ -1,0 +1,70 @@
+# tool: scribe-data
+# All Latin (Q397) verbs (Q24905) and the given forms.
+# Enter this query at https://query.wikidata.org/.
+
+SELECT
+  (REPLACE(STR(?lexeme), "http://www.wikidata.org/entity/", "") AS ?lexemeID)
+  ?verb
+  ?SecondPersonSingularImperativeActive
+  ?FirstPersonSingularIndicativePassive
+  ?FirstPersonSingularIndicativeActive
+  ?SecondPersonPluralIndicativePassive
+  ?FirstPersonPluralIndicativePassive
+  ?FirstPersonPluralIndicativeActive
+  ?ThirdPersonPluralIndicativeActive
+  ?ThirdPersonPluralIndicativePassive
+
+
+WHERE {
+  ?lexeme dct:language wd:Q397 ;
+    wikibase:lexicalCategory wd:Q24905 ;
+    wikibase:lemma ?verb .
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?SecondPersonSingularImperativeActiveForm .
+    ?SecondPersonSingularImperativeActiveForm ontolex:representation ?SecondPersonSingularImperativeActive ;
+      wikibase:grammaticalFeature wd:Q51929049, wd:Q110786, wd:Q501405, wd:Q22716, wd:Q1317831 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?FirstPersonSingularIndicativePassiveForm .
+    ?FirstPersonSingularIndicativePassiveForm ontolex:representation ?FirstPersonSingularIndicativePassive ;
+      wikibase:grammaticalFeature wd:Q21714344, wd:Q110786, wd:Q501405, wd:Q682111, wd:Q1194697 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?FirstPersonSingularIndicativeActiveForm .
+    ?FirstPersonSingularIndicativeActiveForm ontolex:representation ?FirstPersonSingularIndicativeActive ;
+      wikibase:grammaticalFeature wd:Q21714344, wd:Q110786, wd:Q501405, wd:Q682111, wd:Q1317831 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?SecondPersonPluralIndicativePassiveForm .
+    ?SecondPersonPluralIndicativePassiveForm ontolex:representation ?SecondPersonPluralIndicativePassive ;
+      wikibase:grammaticalFeature wd:Q51929049, wd:Q146786, wd:Q501405, wd:Q682111, wd:Q1194697 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?FirstPersonPluralIndicativePassiveForm .
+    ?FirstPersonPluralIndicativePassiveForm ontolex:representation ?FirstPersonPluralIndicativePassive ;
+      wikibase:grammaticalFeature wd:Q21714344, wd:Q146786, wd:Q501405, wd:Q682111, wd:Q1194697 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?FirstPersonPluralIndicativeActiveForm .
+    ?FirstPersonPluralIndicativeActiveForm ontolex:representation ?FirstPersonPluralIndicativeActive ;
+      wikibase:grammaticalFeature wd:Q21714344, wd:Q146786, wd:Q501405, wd:Q682111, wd:Q1317831 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?ThirdPersonPluralIndicativeActiveForm .
+    ?ThirdPersonPluralIndicativeActiveForm ontolex:representation ?ThirdPersonPluralIndicativeActive ;
+      wikibase:grammaticalFeature wd:Q51929074, wd:Q146786, wd:Q501405, wd:Q682111, wd:Q1317831 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?ThirdPersonPluralIndicativePassiveForm .
+    ?ThirdPersonPluralIndicativePassiveForm ontolex:representation ?ThirdPersonPluralIndicativePassive ;
+      wikibase:grammaticalFeature wd:Q51929074, wd:Q146786, wd:Q501405, wd:Q682111, wd:Q1194697 .
+  }
+}

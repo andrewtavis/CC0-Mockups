@@ -4,12 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'src/scribe_data/wikidata/language_data_extraction/**/*.sparql'
+      - "src/scribe_data/wikidata/language_data_extraction/**/*.sparql"
   pull_request:
     branches: [main]
     types: [opened, reopened, synchronize]
     paths:
-      - 'src/scribe_data/wikidata/language_data_extraction/**/*.sparqll'
+      - "src/scribe_data/wikidata/language_data_extraction/**/*.sparql"
 
 jobs:
   format_check:

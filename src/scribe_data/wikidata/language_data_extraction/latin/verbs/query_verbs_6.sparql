@@ -1,0 +1,62 @@
+# tool: scribe-data
+# All Latin (Q397) verbs (Q24905) and the given forms.
+# Enter this query at https://query.wikidata.org/.
+
+SELECT
+  (REPLACE(STR(?lexeme), "http://www.wikidata.org/entity/", "") AS ?lexemeID)
+  ?verb
+  ?SecondPersonSingularIndicativePassive
+  ?SecondPersonSingularIndicativeActive
+  ?FeminineAblativeSingularPassiveParticiple
+  ?NeuterAccusativePluralPassiveParticiple
+  ?NeuterNominativePluralPassiveParticiple
+  ?FeminineNominativeSingularPassiveParticiple
+  ?NeuterVocativePluralPassiveParticiple
+
+WHERE {
+  ?lexeme dct:language wd:Q397 ;
+    wikibase:lexicalCategory wd:Q24905 ;
+    wikibase:lemma ?verb .
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?SecondPersonSingularIndicativePassiveForm .
+    ?SecondPersonSingularIndicativePassiveForm ontolex:representation ?SecondPersonSingularIndicativePassive ;
+      wikibase:grammaticalFeature wd:Q51929049, wd:Q110786, wd:Q501405, wd:Q682111, wd:Q1194697 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?SecondPersonSingularIndicativeActiveForm .
+    ?SecondPersonSingularIndicativeActiveForm ontolex:representation ?SecondPersonSingularIndicativeActive ;
+      wikibase:grammaticalFeature wd:Q51929049, wd:Q110786, wd:Q501405, wd:Q682111, wd:Q1317831 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?FeminineAblativeSingularPassiveParticipleForm .
+    ?FeminineAblativeSingularPassiveParticipleForm ontolex:representation ?FeminineAblativeSingularPassiveParticiple ;
+      wikibase:grammaticalFeature wd:Q1775415, wd:Q156986, wd:Q501405, wd:Q110786, wd:Q1194697, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?NeuterAccusativePluralPassiveParticipleForm .
+    ?NeuterAccusativePluralPassiveParticipleForm ontolex:representation ?NeuterAccusativePluralPassiveParticiple ;
+      wikibase:grammaticalFeature wd:Q1775461, wd:Q146078, wd:Q501405, wd:Q146786, wd:Q1194697, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?NeuterNominativePluralPassiveParticipleForm .
+    ?NeuterNominativePluralPassiveParticipleForm ontolex:representation ?NeuterNominativePluralPassiveParticiple ;
+      wikibase:grammaticalFeature wd:Q131105, wd:Q146078, wd:Q501405, wd:Q146786, wd:Q1194697, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?FeminineNominativeSingularPassiveParticipleForm .
+    ?FeminineNominativeSingularPassiveParticipleForm ontolex:representation ?FeminineNominativeSingularPassiveParticiple ;
+      wikibase:grammaticalFeature wd:Q1775415, wd:Q131105, wd:Q501405, wd:Q110786, wd:Q1194697, wd:Q814722 .
+  }
+
+  OPTIONAL {
+    ?lexeme ontolex:lexicalForm ?NeuterVocativePluralPassiveParticipleForm .
+    ?NeuterVocativePluralPassiveParticipleForm ontolex:representation ?NeuterVocativePluralPassiveParticiple ;
+      wikibase:grammaticalFeature wd:Q1775461, wd:Q185077, wd:Q501405, wd:Q146786, wd:Q1194697, wd:Q814722 .
+  }
+}

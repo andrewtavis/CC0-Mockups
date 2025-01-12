@@ -486,7 +486,7 @@ def check_forms_order(query_text):
     select_lower = [i.lower() for i in select_vars]
 
     if select_lower != sorted_lower:
-        return ", ".join([i[0].lower() + i[1:] for i in sorted_columns])
+        return "  ?" + "\n  ?".join([i[0].lower() + i[1:] for i in sorted_columns])
 
     return sorted_lower == select_lower
 
@@ -557,7 +557,7 @@ def check_query_forms() -> None:
         # Check forms ordering.
         forms_order_result = check_forms_order(query_text)
         if forms_order_result is not True:
-            error_output += f"\n{index}. {query_file_str}:\n  Form ordering for the above file should be:\n- {forms_order_result}\n"
+            error_output += f"\n{index}. {query_file_str}:\n  Form ordering for the above file should be:\n\n{forms_order_result}\n"
             index += 1
 
         # Check that all variables in the WHERE and SELECT clauses are ordered, defined and returned.
