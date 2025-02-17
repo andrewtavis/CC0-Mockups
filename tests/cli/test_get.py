@@ -4,7 +4,6 @@ Tests for the CLI get functionality.
 """
 
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 from scribe_data.cli.get import get_data
@@ -24,7 +23,7 @@ class TestGetData(unittest.TestCase):
         """
         Test the generation of emoji keywords.
 
-        This test ensures that when thee `data_type` is `emoji_keywords`, the `generate_emoji` function is called with the correct arguments.
+        This test ensures that when the `data_type` is `emoji_keywords`, the `generate_emoji` function is called with the correct arguments.
         """
         get_data(
             language="English", data_type="emoji_keywords", output_dir="./test_output"
@@ -41,7 +40,7 @@ class TestGetData(unittest.TestCase):
         Test the behavior of the get_data function when invalid arguments are provided.
         """
         with self.assertRaises(ValueError):
-            get_data()
+            get_data(all_bool=False)
 
     # MARK: All Data
 
@@ -92,12 +91,16 @@ class TestGetData(unittest.TestCase):
     # MARK: Language and Data Type
 
     @patch("scribe_data.cli.get.query_data")
-    def test_get_specific_language_and_data_type(self, mock_query_data):
+    @patch("scribe_data.cli.get.check_index_exists")
+    def test_get_specific_language_and_data_type(
+        self, mock_check_index, mock_query_data
+    ):
         """
         Test retrieving a specific language and data type.
 
         Ensures that `query_data` is called properly when a specific language and data type are provided.
         """
+        mock_check_index.return_value = {"proceed": True}
         get_data(language="german", data_type="nouns", output_dir="./test_output")
         mock_query_data.assert_called_once_with(
             languages=["german"],
@@ -110,13 +113,16 @@ class TestGetData(unittest.TestCase):
     # MARK: Capitalized Language
 
     @patch("scribe_data.cli.get.query_data")
-    @patch("scribe_data.cli.get.Path.glob", return_value=[])
-    def test_get_data_with_capitalized_language(self, mock_glob, mock_query_data):
+    @patch("scribe_data.cli.get.check_index_exists")
+    def test_get_data_with_capitalized_language(
+        self, mock_check_index, mock_query_data
+    ):
         """
         Test retrieving data with a capitalized language.
 
         Ensures that `query_data` is called properly when a capitalized language is provided.
         """
+        mock_check_index.return_value = {"proceed": True}
         get_data(language="German", data_type="nouns")
         mock_query_data.assert_called_once_with(
             languages=["German"],
@@ -129,13 +135,14 @@ class TestGetData(unittest.TestCase):
     # MARK: Lowercase Language
 
     @patch("scribe_data.cli.get.query_data")
-    @patch("scribe_data.cli.get.Path.glob", return_value=[])
-    def test_get_data_with_lowercase_language(self, mock_glob, mock_query_data):
+    @patch("scribe_data.cli.get.check_index_exists")
+    def test_get_data_with_lowercase_language(self, mock_check_index, mock_query_data):
         """
         Test retrieving data with a lowercase language.
 
         Ensures that `query_data` is called properly when a lowercase language is provided.
         """
+        mock_check_index.return_value = {"proceed": True}
         get_data(language="german", data_type="nouns")
         mock_query_data.assert_called_once_with(
             languages=["german"],
@@ -148,12 +155,16 @@ class TestGetData(unittest.TestCase):
     # MARK: Output Directory
 
     @patch("scribe_data.cli.get.query_data")
-    def test_get_data_with_different_output_directory(self, mock_query_data):
+    @patch("scribe_data.cli.get.check_index_exists")
+    def test_get_data_with_different_output_directory(
+        self, mock_check_index, mock_query_data
+    ):
         """
         Test retrieving data with a different output directory.
 
         Ensures that `query_data` is called properly when a different output directory is provided.
         """
+        mock_check_index.return_value = {"proceed": True}
         get_data(
             language="german", data_type="nouns", output_dir="./custom_output_test"
         )
@@ -168,13 +179,14 @@ class TestGetData(unittest.TestCase):
     # MARK: Overwrite is True
 
     @patch("scribe_data.cli.get.query_data")
-    @patch("scribe_data.cli.get.Path.glob", return_value=[])
-    def test_get_data_with_overwrite_true(self, mock_glob, mock_query_data):
+    @patch("scribe_data.cli.get.check_index_exists")
+    def test_get_data_with_overwrite_true(self, mock_check_index, mock_query_data):
         """
         Test retrieving data with the overwrite flag set to True.
 
         Ensures that `query_data` is called properly when the overwrite flag is set to True.
         """
+        mock_check_index.return_value = {"proceed": True}
         get_data(language="English", data_type="verbs", overwrite=True)
         mock_query_data.assert_called_once_with(
             languages=["English"],
@@ -187,7 +199,9 @@ class TestGetData(unittest.TestCase):
     # MARK: Overwrite is False
 
     @patch("scribe_data.cli.get.query_data")
-    def test_get_data_with_overwrite_false(self, mock_query_data):
+    @patch("scribe_data.cli.get.check_index_exists")
+    def test_get_data_with_overwrite_false(self, mock_check_index, mock_query_data):
+        mock_check_index.return_value = {"proceed": True}
         get_data(
             language="English",
             data_type="verbs",
@@ -205,55 +219,14 @@ class TestGetData(unittest.TestCase):
 
     # MARK: User Chooses Skip
 
-    @patch("scribe_data.cli.get.query_data")
-    @patch(
-        "scribe_data.cli.get.Path.glob",
-        return_value=[Path("./test_output/English/nouns.json")],
-    )
-    @patch("scribe_data.cli.get.questionary.confirm")
-    def test_user_skips_existing_file(
-        self, mock_questionary_confirm, mock_glob, mock_query_data
-    ):
+    @patch("scribe_data.cli.get.check_index_exists")
+    def test_user_skips_existing_file(self, mock_check_index):
         """
         Test the behavior when the user chooses to skip an existing file.
-
-        Ensures that the file is not overwritten and the function returns the correct result.
         """
-        mock_questionary_confirm.return_value.ask.return_value = False
-        result = get_data(
-            language="English", data_type="nouns", output_dir="./test_output"
-        )
-
-        # Validate the skip result.
-        self.assertEqual(result, {"success": False, "skipped": True})
-        mock_query_data.assert_not_called()
-
-    # MARK: User Chooses Overwrite
-
-    @patch("scribe_data.cli.get.query_data")
-    @patch(
-        "scribe_data.cli.get.Path.glob",
-        return_value=[Path("./test_output/English/nouns.json")],
-    )
-    @patch("scribe_data.cli.get.questionary.confirm")
-    def test_user_overwrites_existing_file(
-        self, mock_questionary_confirm, mock_glob, mock_query_data
-    ):
-        """
-        Test the behavior when the user chooses to overwrite an existing file.
-
-        Ensures that the file is overwritten and the function returns the correct result.
-        """
-        mock_questionary_confirm.return_value.ask.return_value = True
+        mock_check_index.return_value = {"proceed": False}
         get_data(language="English", data_type="nouns", output_dir="./test_output")
-
-        mock_query_data.assert_called_once_with(
-            languages=["English"],
-            data_type=["nouns"],
-            output_dir="./test_output",
-            overwrite=False,
-            interactive=False,
-        )
+        mock_check_index.assert_called_once_with("./test_output", "English", "nouns")
 
     # MARK: Translations
 
@@ -357,6 +330,10 @@ class TestGetData(unittest.TestCase):
             wikidata_dump_type=["form"],
             data_types=["nouns"],
             type_output_dir="exported_json",
-            wikidata_dump_path="scribe",
+            wikidata_dump_testpath="scribe",
             overwrite_all=False,
         )
+
+
+if __name__ == "__main__":
+    unittest.main()

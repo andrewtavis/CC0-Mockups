@@ -24,6 +24,7 @@ from scribe_data.utils import (
 )
 from scribe_data.wikidata.query_data import query_data
 from scribe_data.wikidata.wikidata_utils import parse_wd_lexeme_dump
+from scribe_data.utils import check_index_exists
 
 
 def get_data(
@@ -115,7 +116,6 @@ def get_data(
                 print(
                     f"Query completed for all data types for language {language.title()}."
                 )
-
             else:
                 parse_wd_lexeme_dump(
                     language=language,
@@ -125,7 +125,6 @@ def get_data(
                     wikidata_dump_path=wikidata_dump,
                     overwrite_all=overwrite,
                 )
-
         elif data_type:
             if prompt_user_download_all():
                 print(f"Updating all languages for data type: {data_type.capitalize()}")
@@ -138,7 +137,6 @@ def get_data(
                 print(
                     f"Query completed for all languages for data type {data_type.capitalize()}."
                 )
-
             else:
                 parse_wd_lexeme_dump(
                     language="all",
@@ -148,7 +146,6 @@ def get_data(
                     wikidata_dump_path=wikidata_dump,
                     overwrite_all=overwrite,
                 )
-
         else:
             print("Updating all languages and data types...")
             rprint(
@@ -162,6 +159,13 @@ def get_data(
                 wikidata_dump_path=wikidata_dump,
                 overwrite_all=overwrite,
             )
+        return  # Exit early to avoid the ValueError check
+
+    # MARK: Error Handling
+    if not language and not data_type:
+        raise ValueError(
+            "You must provide at least one of the --language (-l) or --data-type (-dt) options, or use --all (-a)."
+        )
 
     # MARK: Emojis
 
@@ -196,78 +200,62 @@ def get_data(
             wikidata_dump_type=["form"],
             data_types=data_types,
             type_output_dir=output_dir,
-            wikidata_dump_path=wikidata_dump,
+            wikidata_dump_testpath=wikidata_dump,
             overwrite_all=overwrite,
         )
         return
 
     # MARK: Query Data
 
-    elif language or data_type:
-        language_or_sub_language = language.split(" ")[0]
-        data_type = data_type[0] if isinstance(data_type, list) else data_type
-        print(
-            f"Updating data for language(s): {language.title()}; data type(s): {data_type.capitalize()}"
+    try:
+        check_result = check_index_exists(output_dir, language, data_type)
+        if not check_result["proceed"]:
+            # print(f"Skipping update for {language.title()} {data_type}.")
+            return
+    except Exception as e:
+        print(f"Error checking file existence for {language.title()} {data_type}: {e}")
+        return
+
+    language_or_sub_language = language.split(" ")[0] if language else None
+
+    def print_error_and_suggestions(error_message):
+        """
+        Prints an error message and suggestions for the user.
+        """
+        rprint(error_message)
+        rprint("\n[bold yellow]Suggestions:[/bold yellow]")
+        rprint(
+            "[yellow]1. Try again in a few minutes\n"
+            "2. Consider using a Wikidata dump with --wikidata-dump-path (-wdp)\n"
+            "3. Try querying a smaller subset of data[/yellow]"
         )
-        existing_files = list(Path(output_dir).glob(f"{language}/{data_type}.json"))
-        if existing_files and not overwrite:
-            print(
-                f"Existing file(s) found for {language.title()} and {data_type.capitalize()} in the {output_dir} directory."
-            )
-            for idx, file in enumerate(existing_files, start=1):
-                print(f"{idx}. {file.name}")
 
-            user_choice = questionary.confirm(
-                "Overwrite existing data?", default=False
-            ).ask()
+    try:
+        query_data(
+            languages=[language_or_sub_language],
+            data_type=data_types,
+            output_dir=output_dir,
+            overwrite=overwrite,
+            interactive=interactive,
+        )
+    except json.decoder.JSONDecodeError:
+        print_error_and_suggestions(
+            "[bold red]Error: Invalid response from Wikidata query service. The query may be too large or the service is unavailable.[/bold red]"
+        )
+    except urllib.error.HTTPError as e:
+        error_msg = (
+            "[bold red]Error: A client error occurred. Check your request.[/bold red]"
+            if 400 <= e.code < 500
+            else "[bold red]Error: A server error occurred. Please try again later.[/bold red]"
+        )
+        print_error_and_suggestions(error_msg)
+    except EndPointInternalError:
+        print_error_and_suggestions(
+            "[bold red]Error: The Wikidata endpoint encountered an internal error.[/bold red]"
+        )
 
-            if user_choice:
-                print("Overwrite chosen. Removing existing files...")
-                for file in existing_files:
-                    if file.exists():  # check if the file exists before unlinking
-                        file.unlink()
-            else:
-                print(f"Skipping update for {language.title()} {data_type}.")
-                return {"success": False, "skipped": True}
-
-        def print_error_and_suggestions(error_message):
-            """
-            Prints an error message and suggestions for the user.
-            """
-            rprint(error_message)
-            rprint("\n[bold yellow]Suggestions:[/bold yellow]")
-            rprint(
-                "[yellow]1. Try again in a few minutes\n"
-                "2. Consider using a Wikidata dump with --wikidata-dump-path (-wdp)\n"
-                "3. Try querying a smaller subset of data[/yellow]"
-            )
-
-        try:
-            query_data(
-                languages=[language_or_sub_language],
-                data_type=data_types,
-                output_dir=output_dir,
-                overwrite=overwrite,
-                interactive=interactive,
-            )
-        except json.decoder.JSONDecodeError:
-            print_error_and_suggestions(
-                "[bold red]Error: Invalid response from Wikidata query service. The query may be too large or the service is unavailable.[/bold red]"
-            )
-        except urllib.error.HTTPError as e:
-            error_msg = (
-                "[bold red]Error: A client error occurred. Check your request.[/bold red]"
-                if 400 <= e.code < 500
-                else "[bold red]Error: A server error occurred. Please try again later.[/bold red]"
-            )
-            print_error_and_suggestions(error_msg)
-        except EndPointInternalError:
-            print_error_and_suggestions(
-                "[bold red]Error: The Wikidata endpoint encountered an internal error.[/bold red]"
-            )
-
-        if not all_bool:
-            print(f"Updated data was saved in: {Path(output_dir).resolve()}.")
+    if not all_bool:
+        print(f"Updated data was saved in: {Path(output_dir).resolve()}.")
 
     else:
         raise ValueError(

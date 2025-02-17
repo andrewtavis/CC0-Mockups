@@ -725,35 +725,63 @@ def check_lexeme_dump_prompt_download(output_dir: str):
             return True
 
 
-def check_index_exists(index_path: Path, overwrite_all: bool = False) -> bool:
+def check_index_exists(output_dir: str, language: str, data_type: str) -> dict:
     """
-    Check if JSON wiktionary dump file exists and prompt user for action if it does.
-    Returns True if user chooses to skip (i.e., we do NOT proceed).
-    Returns False if the file doesn't exist or user chooses to overwrite (i.e., we DO proceed).
+    Checks if the requested language-data type JSON file exists in the output directory.
 
-    Parameters
-    ----------
-    index_path : pathlib.Path
-        The path to check.
+    Parameters:
+    - output_dir (str): The directory where the file should be located.
+    - language (str): The target language.
+    - data_type (str): The requested data type.
 
-    overwrite_all : cool (default=False)
-        If True, automatically overwrite without prompting.
+    Returns:
+    - dict: A dictionary containing proceed with fetching data, whether the update was skipped, and any deleted files.
     """
-    if index_path.exists():
-        if overwrite_all:
-            return False
 
-        print(f"\nIndex file already exists at: {index_path}")
-        choice = questionary.select(
-            "Choose an action:",
-            choices=["Overwrite existing data", "Skip process"],
-            default="Skip process",
-        ).ask()
+    sanitised_language = language.lower().replace(" ", "_")
+    sanitised_data_type = data_type.lower().replace("-", "_")
 
-        # If user selects "Skip process", return True meaning "don't proceed".
-        return choice == "Skip process"
+    target_path = Path(output_dir) / sanitised_language / f"{sanitised_data_type}.json"
+    existing_files = list(target_path.parent.glob(f"{sanitised_data_type}.json"))
 
-    return False
+    if not existing_files:
+        return {
+            "proceed": True,
+            "skipped": False,
+            "files_deleted": [],
+        }  # No existing file, proceed normally.
+
+    print(
+        f"Existing file(s) found for {language.title()} and {data_type.capitalize()} in {output_dir}."
+    )
+
+    for idx, file in enumerate(existing_files, start=1):
+        print(f"{idx}. {file.name}")
+
+    # if not interactive:
+    #     print("Non-interactive mode, skipping update")
+    #     return {"proceed" : False, "skipped" : True, "files_deleted": []}
+
+    user_choice = (
+        input("\nOverwrite existing data? (o for overwrite, any other key to skip): ")
+        .strip()
+        .lower()
+    )
+
+    if user_choice == "o":
+        print("Overwrite chosen. Removing existing files...")
+        deleted_files = []
+        for file in existing_files:
+            try:
+                file.unlink()
+                deleted_files.append(str(file))
+            except OSError as e:
+                print(f"Error deleting file {file}: {e}")
+
+        return {"proceed": True, "skipped": False, "deleted_files": deleted_files}
+    else:
+        print(f"Skipping update for {language.title()} {data_type}.")
+        return {"proceed": False, "skipped": True, "deleted_files": []}
 
 
 def check_qid_is_language(qid: str):

@@ -22,6 +22,8 @@ from scribe_data.utils import (
 )
 from scribe_data.wikidata.wikidata_utils import sparql
 
+from scribe_data.utils import check_index_exists
+
 
 def execute_formatting_script(output_dir: str, language: str, data_type: str):
     """
@@ -82,7 +84,7 @@ def query_data(
     languages: str = None,
     data_type: str = None,
     output_dir: str = None,
-    overwrite: bool = None,
+    overwrite: bool = False,
     interactive: bool = False,
 ):
     """
@@ -164,161 +166,75 @@ def query_data(
         file_name = f"{target_type}.json"
         file_path = export_dir / file_name
 
-        if existing_files := list(export_dir.glob(f"{target_type}*.json")):
-            if overwrite:
-                print("Overwrite is enabled. Removing existing files...")
-                for file in existing_files:
-                    file.unlink()
-
-            else:
-                if not interactive:
-                    print(
-                        f"\nExisting file(s) found for {lang.title()} {target_type} in the {output_dir} directory:\n"
-                    )
-                    for i, file in enumerate(existing_files, 1):
-                        print(f"{i}. {file.name}")
-
-                    # choice = input(
-                    #     "\nChoose an option:\n1. Overwrite existing (press 'o')\n2. Keep all (press 'k')\n3. Skip process (press anything else)\nEnter your choice: "
-                    # )
-
-                    choice = input(
-                        "\nChoose an option:\n1. Overwrite existing data (press 'o')\n2. Skip process (press anything else)\nEnter your choice: "
-                    )
-
-                    if choice.lower() == "o":
-                        print("Removing existing files...")
-                        for file in existing_files:
-                            file.unlink()
-
-                    # elif choice in ["k", "K"]:
-                    #     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-                    #     file_name = f"{target_type}_{timestamp}.json"
-
-                    else:
-                        print(f"Skipping update for {lang.title()} {target_type}.")
-
-        print(f"Querying and formatting {lang.title()} {target_type}")
-
-        # Mark the query as the first in a set of queries if needed.
-        if not q.exists():
-            q = Path(str(q).replace(".sparql", "_1.sparql"))
-
-        # First format the lines into a multi-line string and then pass this to SPARQLWrapper.
-        with open(q, encoding="utf-8") as file:
-            query_lines = file.readlines()
-
-        sparql.setQuery("".join(query_lines))
-
-        results = None
-
+        # using check_index_exists to check if the file exists
         try:
-            results = sparql.query().convert()
-
-        except HTTPError as http_err:
-            print(f"HTTPError with {q}: {http_err}")
-            return {"success": False, "skipped": False}
-        except IncompleteRead as read_err:
-            print(f"Incomplete read error with {q}: {read_err}")
-            return {"success": False, "skipped": False}
-
-        if results is None:
-            print(f"Nothing returned by the WDQS server for {q}")
-
-            # Allow for a query to be reran up to two times.
-            if queries_to_run.count(q) < 3:
-                print("The query will be retried.")
-                queries_to_run.append(q)
-            else:
-                print("Max retries reached. Skipping this query.")
-                return {"success": False, "skipped": False}
-
-        else:
-            # Subset the returned JSON and the individual results before saving.
-            query_results = results["results"]["bindings"]
-
-            results_final = []
-
-            for r in query_results:  # query_results is also a list
-                r_dict = {k: r[k]["value"] for k in r.keys()}
-
-                results_final.append(r_dict)
-
-            with open(
-                Path(output_dir)
-                / lang.replace(" ", "_")
-                / f"{target_type}_queried.json",
-                "w",
-                encoding="utf-8",
-            ) as f:
-                json.dump(results_final, f, ensure_ascii=False, indent=0)
-
-            if "_1" in q.name:
-                # Note: Only the first query was ran, so we need to run the second and append the json.
-                for i in range(max_query_interval + 1)[2:]:
-                    suffix = f"_{i}"
-                    q = Path(str(q).replace(f"_{i-1}", suffix))
-
-                    if q.exists():
-                        with open(q, encoding="utf-8") as file:
-                            query_lines = file.readlines()
-                            sparql.setQuery("".join(query_lines))
-
-                            results = None
-                            try:
-                                results = sparql.query().convert()
-
-                            except HTTPError as err:
-                                print(f"HTTPError with {q}: {err}")
-
-                            if results is None:
-                                print(f"Nothing returned by the WDQS server for {q}")
-
-                                # Allow for a query to be reran up to two times.
-                                if queries_to_run.count(q) < 3:
-                                    queries_to_run.append(q)
-
-                            else:
-                                # Subset the returned JSON and the individual results before saving.
-                                query_results = results["results"]["bindings"]
-
-                                # Note: Don't rewrite results_final as we want to extend the json and combine in formatting.
-                                for r in query_results:  # query_results is also a list
-                                    r_dict = {k: r[k]["value"] for k in r.keys()}
-
-                                    # Note: The following is so we have a breakdown of queries for German later.
-                                    # Note: We need auxiliary verbs to be present as we loop to get both sein and haben forms.
-                                    if lang == "German":
-                                        r_dict_keys = list(r_dict.keys())
-                                        if "auxiliaryVerb" not in r_dict_keys:
-                                            r_dict["auxiliaryVerb"] = ""
-
-                                    results_final.append(r_dict)
-
-                                with open(
-                                    Path(output_dir)
-                                    / lang.replace(" ", "_")
-                                    / f"{target_type}_queried.json",
-                                    "w",
-                                    encoding="utf-8",
-                                ) as f:
-                                    json.dump(
-                                        results_final,
-                                        f,
-                                        ensure_ascii=False,
-                                        indent=0,
-                                    )
-
-            # MARK: Save Results
-
-            with open(file_path, "w", encoding="utf-8") as json_file:
-                json.dump(results_final, json_file, ensure_ascii=False, indent=0)
-
-            # Call the formatting script.
-            execute_formatting_script(
-                output_dir=output_dir, language=lang, data_type=target_type
-            )
-
+            check_result = check_index_exists(output_dir, lang, target_type)
+            if not check_result["proceed"]:
+                print(f"Skipping query for {lang.title()} {target_type}.")
+                continue  # Skip this query if the user chooses not to overwrite
+        except Exception as e:
             print(
-                f"Successfully queried and formatted data for {lang.title()} {target_type}."
+                f"Error checking file existence for {lang.title()} {target_type}: {e}"
             )
+            continue
+
+        for attempt in range(3):
+            try:
+                with open(q, encoding="utf-8") as file:
+                    sparql.setQuery(file.read())
+
+                results = sparql.query().convert()
+                if results:
+                    break
+
+            except (HTTPError, IncompleteRead) as e:
+                print(f"Error: {e}")
+                if attempt < 2:
+                    print("Retrying...")
+                    continue
+                else:
+                    print("Max retries reached. Skipping this query.")
+                    continue
+
+        query_results = results["results"]["bindings"]
+        results_final = [{k: r[k]["value"] for k in r.keys()} for r in query_results]
+
+        # Handle auxiliary verbs for German
+        if lang == "German":
+            for entry in results_final:
+                entry.setdefault("auxiliaryVerb", "")
+
+        queried_file_path = export_dir / f"{target_type}_queried.json"
+        with open(queried_file_path, "w", encoding="utf-8") as f:
+            json.dump(results_final, f, ensure_ascii=False, indent=0)
+
+        # Handle additional interval-based queries (_2, _3, etc.)
+        if "_1" in q.name:
+            for i in range(2, max_query_interval + 1):
+                additional_query = Path(str(q).replace("_1", f"_{i}"))
+                if additional_query.exists():
+                    try:
+                        with open(additional_query, encoding="utf-8") as file:
+                            sparql.setQuery(file.read())
+
+                        results = sparql.query().convert()
+                        if results:
+                            query_results = results["results"]["bindings"]
+                            results_final.extend(
+                                {k: r[k]["value"] for k in r.keys()}
+                                for r in query_results
+                            )
+
+                    except HTTPError as err:
+                        print(f"HTTPError with {additional_query}: {err}")
+
+        # Save final results
+        with open(file_path, "w", encoding="utf-8") as json_file:
+            json.dump(results_final, json_file, ensure_ascii=False, indent=0)
+
+        execute_formatting_script(
+            output_dir=output_dir, language=lang, data_type=target_type
+        )
+        print(
+            f"Successfully queried and formatted data for {lang.title()} {target_type}."
+        )
