@@ -12,11 +12,9 @@ from scribe_data.load.data_to_sqlite import data_to_sqlite
 from scribe_data.utils import (
     DEFAULT_CSV_EXPORT_DIR,
     DEFAULT_JSON_EXPORT_DIR,
-    DEFAULT_SQLITE_EXPORT_DIR,
     DEFAULT_TSV_EXPORT_DIR,
     camel_to_snake,
 )
-
 # MARK: JSON
 
 
@@ -359,76 +357,6 @@ def convert_to_csv_or_tsv(
         print(f"Data for {language.capitalize()} {dtype} written to '{output_file}'")
 
 
-# MARK: SQLite
-
-
-def convert_to_sqlite(
-    language: str,
-    data_type: str,
-    output_type: str,
-    input_file: str = None,
-    output_dir: str = None,
-    overwrite: bool = False,
-    identifier_case: str = "camel",
-) -> None:
-    """
-    Convert a Scribe-Data output file to SQLite format.
-
-    Parameters
-    ----------
-    language : str
-        The language of the file to convert.
-
-    data_type : str
-        The data type of the file to convert.
-
-    output_type : str
-        The output format, should be "sqlite".
-
-    input_file : str, optional
-        The input file path for the data to be converted.
-
-    output_dir : str, optional
-        The output directory path for results.
-
-    overwrite : bool, optional
-        Whether to overwrite existing files.
-
-    identifier_case : str, optional
-        The case format for identifiers. Default is "camel".
-
-    Returns
-    -------
-    None
-        A SQLite file saved in the given location.
-    """
-    if input_file:
-        input_file = Path(input_file)
-
-    if input_file is not None and not input_file.exists():
-        raise ValueError(f"Input file does not exist: {input_file}")
-
-    languages = [language] if data_type else None
-    specific_tables = [data_type] if data_type else None
-
-    if output_dir is None:
-        output_dir = Path(DEFAULT_SQLITE_EXPORT_DIR)
-
-    else:
-        output_dir = Path(output_dir)
-
-    if not output_dir.exists():
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-    data_to_sqlite(
-        languages=languages,
-        specific_tables=specific_tables,
-        identifier_case=identifier_case,
-    )
-
-    print("SQLite file conversion complete.")
-
-
 # MARK: Convert Wrapper
 
 
@@ -476,12 +404,6 @@ def convert_wrapper(
     None
         This function does not return any value; it performs a conversion operation.
     """
-    output_type = output_type.lower()
-
-    if languages is not None and data_types is not None:
-        print(
-            f"Converting data for {languages.capitalize()} {data_types} to {output_type}..."
-        )
 
     # Route the function call to the correct conversion function.
     if output_type == "json":
@@ -507,14 +429,13 @@ def convert_wrapper(
         )
 
     elif output_type == "sqlite":
-        convert_to_sqlite(
-            language=languages,
-            data_type=data_types,
-            output_type=output_type,
-            input_file=input_files,
-            output_dir=output_dir,
-            overwrite=overwrite,
+        data_to_sqlite(
+            languages=languages,
+            specific_tables=data_types,
             identifier_case=identifier_case,
+            input_file=input_files,
+            output_file=output_dir,
+            overwrite=overwrite,
         )
 
     else:

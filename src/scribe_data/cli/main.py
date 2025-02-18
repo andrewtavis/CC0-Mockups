@@ -425,6 +425,7 @@ def main() -> None:
                     "Check for totals",
                     "Get data",
                     "Get translations",
+                    "Convert JSON",
                     "Exit",
                 ],
             ).ask()
@@ -440,6 +441,9 @@ def main() -> None:
 
             elif action == "Get translations":
                 start_interactive_mode(operation="translations")
+
+            elif action == "Convert JSON":
+                start_interactive_mode(operation="convert")
 
             else:
                 print("Skipping action")

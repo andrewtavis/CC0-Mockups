@@ -12,7 +12,6 @@ from unittest.mock import MagicMock, mock_open, patch
 from scribe_data.cli.convert import (
     convert_to_csv_or_tsv,
     convert_to_json,
-    convert_to_sqlite,
     convert_wrapper,
 )
 
@@ -633,16 +632,24 @@ class TestConvert(unittest.TestCase):
     def test_convert_to_sqlite(self, mock_shutil_copy, mock_data_to_sqlite, mock_path):
         mock_path.return_value.exists.return_value = True
 
-        convert_to_sqlite(
-            language="english",
-            data_type="nouns",
-            input_file="file",
+        convert_wrapper(
+            languages="english",
+            data_types="nouns",
+            input_files="file",
             output_type="sqlite",
             output_dir="/output",
             overwrite=True,
+            identifier_case="camel",
         )
 
-        mock_data_to_sqlite.assert_called_with(["english"], ["nouns"], "camel")
+        mock_data_to_sqlite.assert_called_with(
+            languages="english",
+            specific_tables="nouns",
+            identifier_case="camel",
+            input_file="file",
+            output_file="/output",
+            overwrite=True,
+        )
 
     @patch("scribe_data.cli.convert.Path", autospec=True)
     @patch("scribe_data.cli.convert.data_to_sqlite", autospec=True)
@@ -656,16 +663,24 @@ class TestConvert(unittest.TestCase):
         mock_input_file.parent.__truediv__.return_value = MagicMock()
         mock_input_file.parent.__truediv__.return_value.exists.return_value = False
 
-        convert_to_sqlite(
-            language="english",
-            data_type="nouns",
-            input_file=mock_input_file,
+        convert_wrapper(
+            languages=["english"],
+            data_types=["nouns"],
+            input_files=mock_input_file,
             output_type="sqlite",
             output_dir=None,
             overwrite=True,
+            identifier_case="camel",
         )
 
-        mock_data_to_sqlite.assert_called_with(["english"], ["nouns"], "camel")
+        mock_data_to_sqlite.assert_called_with(
+            languages=["english"],
+            specific_tables=["nouns"],
+            identifier_case="camel",
+            input_file=mock_input_file,
+            output_file=None,
+            overwrite=True,
+        )
 
     def test_convert(self):
         with self.assertRaises(ValueError) as context:
